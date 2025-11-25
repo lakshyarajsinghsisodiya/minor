@@ -1,0 +1,210 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<title>Lecture Attendance Calculator</title>
+<style>
+    body { font-family: Arial; padding: 20px; background: #f8f8f8; }
+    .container {
+        max-width: 950px; margin: auto; background: white;
+        padding: 20px; border-radius: 10px; box-shadow: 0 0 10px #ccc;
+    }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ddd; padding: 6px; text-align: center; }
+    th { background: #007bff; color: white; }
+    button {
+        padding: 10px 20px; background: #007bff; color: white; border: none;
+        border-radius: 5px; cursor: pointer; margin-top: 20px;
+    }
+    button:hover { background: #0056b3; }
+    #result { margin-top: 20px; font-size: 18px; font-weight: bold; }
+
+    
+    #feedbackBtn {
+        position: fixed;
+        bottom: 25px;
+        right: 25px;
+        z-index: 9999;
+        padding: 15px 30px;
+        font-size: 18px;
+        font-weight: bold;
+        border: none;
+        border-radius: 50px;
+        cursor: pointer;
+        background: linear-gradient(45deg, #ff00ff, #00e1ff, #ffea00, #ff0077);
+        background-size: 400% 400%;
+        color: white;
+        text-shadow: 0 0 10px black;
+        box-shadow: 0 0 20px #ff00ff, 0 0 40px #00e1ff, 0 0 60px #ffea00;
+        animation: neonMove 4s infinite, pulseGlow 1.5s infinite;
+        transition: transform 0.3s ease;
+    }
+
+    #feedbackBtn:hover {
+        transform: scale(1.2) rotate(3deg);
+        box-shadow: 0 0 30px #ff00ff, 0 0 60px #00e1ff, 0 0 80px #ffea00;
+    }
+
+    @keyframes neonMove {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    @keyframes pulseGlow {
+        0% { box-shadow: 0 0 20px #ff00ff; }
+        50% { box-shadow: 0 0 60px #00e1ff; }
+        100% { box-shadow: 0 0 20px #ffea00; }
+    }
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h2>Monthly Attendance Calculator for AALSI SCHOLARS</h2>
+
+    <label>Month:</label>
+    <select id="month">
+        <option value="1">January</option>
+        <option value="2">February</option>
+        <option value="3">March</option>
+        <option value="4">April</option>
+        <option value="5">May</option>
+        <option value="6">June</option>
+        <option value="7">July</option>
+        <option value="8">August</option>
+        <option value="9">September</option>
+        <option value="10">October</option>
+        <option value="11">November</option>
+        <option value="12">December</option>
+    </select>
+
+    <label>Year:</label>
+    <input type="number" id="year" value="2025">
+
+    <button onclick="generateTable()">Load Attendance Sheet</button>
+
+    <div id="daysTable"></div>
+
+    <button onclick="calculateAttendance()">Calculate Attendance</button>
+
+    <div id="result"></div>
+</div>
+
+
+<button id="feedbackBtn" onclick="window.location.href='https://forms.gle/2BvUaYEaTcYJQpRv7'">
+    Give Feedback Chatt 💬
+</button>
+
+<script>
+function getTotalDays(month, year) {
+    return new Date(year, month, 0).getDate();
+}
+
+function toggleAllLectures(day, isChecked) {
+    for (let lec = 1; lec <= 7; lec++) {
+        let cb = document.getElementById(`d${day}l${lec}`);
+        if (!cb.disabled) cb.checked = isChecked;
+    }
+}
+
+function updateMarkAll(day) {
+    let allChecked = true;
+    for (let lec = 1; lec <= 7; lec++) {
+        if (!document.getElementById(`d${day}l${lec}`).checked) {
+            allChecked = false;
+            break;
+        }
+    }
+    document.getElementById(`all${day}`).checked = allChecked;
+}
+
+function generateTable() {
+    let month = +document.getElementById("month").value;
+    let year = +document.getElementById("year").value;
+    let totalDays = getTotalDays(month, year);
+
+    let html = `
+    <table>
+        <tr>
+            <th>Date</th>
+            <th>Day</th>
+            <th style="background-color: rgb(100, 174, 27);">All</th>
+            <th>Lec 1</th>
+            <th>Lec 2</th>
+            <th>Lec 3</th>
+            <th>Lec 4</th>
+            <th>Lec 5</th>
+            <th>Lec 6</th>
+            <th>Lec 7</th>
+        </tr>
+    `;
+
+    for (let d = 1; d <= totalDays; d++) {
+        let date = new Date(year, month - 1, d);
+        let dayName = date.toLocaleString("en-IN", { weekday: "long" });
+
+        let isHoliday = (dayName === "Saturday" || dayName === "Sunday");
+
+        html += `
+            <tr>
+                <td>${d}/${month}/${year}</td>
+                <td>${dayName}</td>
+                <td><input type="checkbox" id="all${d}" ${isHoliday ? "disabled" : ""}
+                    onclick="toggleAllLectures(${d}, this.checked)"></td>
+        `;
+
+        for (let lec = 1; lec <= 7; lec++) {
+            let disabled = isHoliday ? "disabled" : "";
+            html += `
+                <td>
+                    <input type="checkbox" id="d${d}l${lec}" ${disabled}
+                        onclick="updateMarkAll(${d})">
+                </td>
+            `;
+        }
+
+        html += `</tr>`;
+    }
+
+    html += `</table>`;
+    document.getElementById("daysTable").innerHTML = html;
+}
+
+function calculateAttendance() {
+    let month = +document.getElementById("month").value;
+    let year = +document.getElementById("year").value;
+    let totalDays = getTotalDays(month, year);
+
+    let totalLectures = 0;
+    let attendedLectures = 0;
+
+    for (let d = 1; d <= totalDays; d++) {
+        let dayName = new Date(year, month - 1, d)
+            .toLocaleString("en-IN", { weekday: "long" });
+
+        if (dayName === "Saturday" || dayName === "Sunday") continue;
+
+        totalLectures += 7;
+
+        for (let lec = 1; lec <= 7; lec++) {
+            let checkbox = document.getElementById(`d${d}l${lec}`);
+            if (checkbox.checked) attendedLectures++;
+        }
+    }
+
+    let percentage = (attendedLectures / totalLectures) * 100;
+    
+    document.getElementById("result").innerHTML = `
+        Here is your overview you lazyy kiddoss <br>
+        Total Working Lectures: ${totalLectures} <br>
+        Attended Lectures: ${attendedLectures} <br>
+        Attendance Percentage: ${percentage.toFixed(2)}%
+    `;
+}
+</script>
+
+</body>
+</html>
